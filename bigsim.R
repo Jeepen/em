@@ -5,6 +5,7 @@ library(data.table)
 library(haven)
 library(tidyverse)
 library(survival)
+library(doRNG)
 library(doParallel)
 cl <- parallel::makeCluster(3)
 doParallel::registerDoParallel(cl)
@@ -29,9 +30,10 @@ ests <- foreach(i = 1:50, .combine = "rbind", #.options.RNG = 27102020,
   cat("outer iteration: ", i, "\n")
   # W <- rpois(n, lambda = lambdaPois) + 1                         # Antal behandlinger
   sex <- rbinom(n, 1, .5)                  
-  W <- rpois(n, lambda = lambdaPois) + 1
-  W[sex == 1] <- rpois(sum(sex == 1), lambda = 3) + 1
-  # W <- sample(1:4, n, replace = TRUE)
+  # W <- rpois(n, lambda = lambdaPois) + 1
+  # W[sex == 1] <- rpois(sum(sex == 1), lambda = 3) + 1
+  W <- sample(1:4, n, replace = TRUE)
+  W[sex == 1] <- rpois(sum(sex == 1), lambda = 1) + 1
   UW <- (W == 1) + 1.5 * (W == 2) + 4 * (W == 3) + 6 * (W >= 4)     # HR for forskellige antal behandlinger
   # UW <- pmin(exp(W - 4), 1)
   u <- runif(n)
