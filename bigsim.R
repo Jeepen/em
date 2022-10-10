@@ -1,8 +1,8 @@
 rm(list=ls())
 set.seed(13072020)
-library(rstudioapi)
+# library(rstudioapi)
 library(data.table)
-library(haven)
+# library(haven)
 library(tidyverse)
 library(survival)
 library(doRNG)
@@ -10,28 +10,29 @@ library(doParallel)
 cl <- parallel::makeCluster(6)
 doParallel::registerDoParallel(cl)
 setwd(dirname(getSourceEditorContext()$path))
+# setwd("ucph/hdir/SundKonsolidering_BioStatHome/Documents/")
 source("functions.R")
 
 # Parametre -------------------------------------------------------------------------------------------------------
-n <- 1e4                                                  # Antal obs
-lambda <- 1e-4                                            # Konstant baseline hazard 
+n <- 1e3                                                  # Antal obs
+lambda <- 3e-4                                            # Konstant baseline hazard 
 HR <- 1                                                   # HR af behandling
 HRsex <- 2
 # tau <- rexp(n, rate=1/1000)                               # Censorering
 ## tau <- 1000
-lambdaPois <- 3.5                                           # Parameter til poissonfordeling
+# lambdaPois <- 3                                           # Parameter til poissonfordeling
 D <- 100                                                  # Behandlingslængde
 M <- 4
 
 ## Simulation
 starttime <- Sys.time()
-ests <- foreach(i = 1:10, .combine = "rbind", .options.RNG = 05102022, 
+ests <- foreach(i = 1:100, .combine = "rbind", .options.RNG = 05102022, 
                 .packages = c("data.table", "survival")) %dorng% {
   cat("outer iteration: ", i, "\n")
   # W <- rpois(n, lambda = lambdaPois) + 1                         # Antal behandlinger
   sex <- rbinom(n, 1, .5)                  
-  W <- rpois(n, lambda = lambdaPois) + 1
-  W[sex == 1] <- rpois(sum(sex == 1), lambda = 1.5) + 1
+  W <- rpois(n, lambda = 2) + 1
+  W[sex == 1] <- rpois(sum(sex == 1), lambda = 3) + 1
   # W <- sample(1:4, n, replace = TRUE, prob = c(.1,.2,.2,.5))
   # W[sex == 1] <- rpois(sum(sex == 1), lambda = 2) + 1
   UW <- (W == 1) + 2 * (W == 2) + 3 * (W == 3) + 4 * (W >= 4)    # HR for forskellige antal behandlinger
@@ -96,4 +97,4 @@ mean(-ests[,1]-1.96*ests[,2]<log(1) & -ests[,1]+1.96*ests[,2]>log(1))
 sum(is.nan(ests))
 apply(ests,2,mean)
 
-saveRDS(ests, "C:/Users/vcl891/Documents/EM_algoritme/Code/simresults.rds")
+saveRDS(ests, "ucph/hdir/SundKonsolidering_BioStatHome/Documents/simresults07102022.rds")

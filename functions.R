@@ -188,3 +188,6 @@ cox_ate <- function(object, data, timepoint){
   dsub[, Y0 := predict(object, newdata = transform(dsub, treat = 0), type = "survival")]
   list(ate = dsub[, mean(Y0 - Y1)], risk1 = dsub[, mean(1-Y1)], risk0 = dsub[, mean(1-Y0)])
 }
+
+
+
