@@ -139,54 +139,79 @@ emSE <- function(object, M = 4, maxit = Inf){
   ## -information
 }
 
-ate <- function(object, timepoint){
-  d <- object$d
+ate <- function(object, timepoint, D){
+  probs <- object$probs
   m <- object$model
-  d[, idW := as.factor(id) : as.factor(W)]
-  firsts <- d[, match(unique(idW), idW)]
-  dsub <- d[firsts,]
-  dsub[, time2 := timepoint]
-  dsub[, Y1 := predict(m, newdata = transform(dsub, treat = 1), type = "survival")]
-  dsub[, Y0 := predict(m, newdata = transform(dsub, treat = 0), type = "survival")]
-  list(ate = dsub[, sum((Y0 - Y1) * weight) / sum(weight)], 
-       risk1 = dsub[, sum((1 - Y1) * weight) / sum(weight)],
-       risk0 = dsub[, sum((1 - Y0) * weight) / sum(weight)])
+  d <- data.frame(treat = rep(1, length(probs)), time1 = 0, time2 = timepoint, W = 1:length(probs), status = 1)
+  p0 <- sum((1 - predict(m, newdata = d, type = "survival")) * probs)
+  d <- data.frame(treat = rep(c(1,0), length(probs)), 
+                  time1 = rep(c(0, D), length(probs)), 
+                  time2 = rep(c(D, timepoint), length(probs)), 
+                  W = rep(1:length(probs), each = 2), status = rep(c(0,1), length(probs)))
+  p1 <- aggregate(predict(m, newdata = d, type = "survival"), by = list(d$W), FUN = "prod")$x
+  p1 <- sum((1 - p1) * probs)
+  list(ate = p1 - p0, risk1 = p1, risk0 = p0)
 }
 
-stovlestrop <- function(formula, data, object, timepoint, nstraps = 1000, M = 4, maxit = 100, beta = NULL){
+stovlestrop <- function(formula, data, object, timepoint, D, nstraps = 1000, M = 4, maxit = 100){
   strapped_ests <- numeric(nstraps)
   for(i in 1:nstraps){
     cat("Iteration: ", i, "\n")
-    ids <- sample(unique(data$id), replace = TRUE)
-    d <- data[id %in% ids,]
-    m <- em(formula, data = d, M = M, maxit = 100, object = object)
+    # ids <- sample(unique(data$id), replace = TRUE)
+    # d <- do.call(rbind, lapply(ids, function(j) data[id == j,]))
+    d <- dsample(data, ~id)
+    m <- em(formula, data = d, M = 4, maxit = 100)#, object = object)
     cat("Cox: ", m$model$coefficients, "\n")
-    strapped_ests[i] <- ate(m, timepoint)$ate
-    cat("est: ", i, ": ", strapped_ests[i], "\n")
+    strapped_ests[i] <- ate(m, timepoint, D)$ate
+    cat("est:", i, ":", strapped_ests[i], "\n")
   }
   strapped_ests
 }
 
-stovlestrop_par <- function(formula, data, object, timepoint, nstraps = 1000, M = 4, maxit = 100, beta = NULL){
-  strapped_ests <- foreach(i = 1:nstraps) %dopar% {
+stovlestrop_par <- function(formula, data, object, timepoint, D, nstraps = 1000, M = 4, maxit = 100){
+  strapped_ests <- foreach(i=1:nstraps, .combine="c", .export = c("em","ate"), .packages = c("data.table","survival","stats")) %dopar% {
     cat("Iteration: ", i, "\n")
-    ids <- sample(unique(data$id), replace = TRUE)
-    d <- data[id %in% ids,]
-    m <- em(formula, data = d, M = M, maxit = 100, object = object)
-    cat("Cox: ", m$model$coefficients, "\n")
-    strapped_ests[i] <- ate(m, timepoint)$ate
-    cat("est: ", i, ": ", strapped_ests[i], "\n")
+    # ids <- sample(unique(data$id), replace = TRUE)
+    # d <- do.call(rbind, lapply(ids, function(j) data[id == j,]))
+    d <- dsample(data, ~id)
+    m <- em(formula, data = d, M = M, maxit = 100)#, object = object)
+    ate(m, timepoint, D)$ate
   }
   strapped_ests
 }
 
-cox_ate <- function(object, data, timepoint){
+cox_ate <- function(object, data, timepoint, D){
   firsts <- data[, match(unique(id), id)]
   dsub <- data[firsts,]
   dsub[, time2 := timepoint]
-  dsub[, Y1 := predict(object, newdata = transform(dsub, treat = 1), type = "survival")]
-  dsub[, Y0 := predict(object, newdata = transform(dsub, treat = 0), type = "survival")]
-  list(ate = dsub[, mean(Y0 - Y1)], risk1 = dsub[, mean(1-Y1)], risk0 = dsub[, mean(1-Y0)])
+  p0 <- mean(1 - predict(object, newdata = transform(dsub, treat = 1), type = "survival"))
+  dsub <- rbind(dsub, dsub)
+  dsub <- dsub[order(id),]
+  dsub[, time2 := rep(c(D, timepoint), nrow(dsub)/2)]
+  dsub[, time1 := rep(c(0, D), nrow(dsub)/2)]
+  # dsub[, Y1 := predict(object, newdata = transform(dsub, treat = 1), type = "survival")]
+  # dsub[, Y0 := predict(object, newdata = transform(dsub, treat = 0), type = "survival")]
+  p1 <- aggregate(predict(object, newdata = dsub, type = "survival"), by = list(dsub$id), FUN = "prod")$x
+  p1 <- mean(1 - p1)
+  list(ate = p1 - p0, risk1 = p1, risk0 = p0)
+}
+
+cox_stovlestrop <- function(formula, data, timepoint, D, nstraps = 100){
+  strapped_ests <- numeric(nstraps)
+  for(i in 1:nstraps){
+    cat("Iteration: ", i, "\n")
+    d <- dsample(data, ~id)
+    # ids <- sample(unique(data$id), replace = TRUE)
+    # d2 <- data[,,by=id]
+    # d <- do.call(rbind, lapply(ids, function(j) data[id == j,]))
+    # d <- data.frame(d)
+    # setDT(d)
+    m <- coxph(formula, data = d, model = TRUE) #, object = object)
+    cat("Cox: ", m$model$coefficients, "\n")
+    strapped_ests[i] <- cox_ate(m, data = d, timepoint = timepoint, D = D)$ate
+    cat("est:", i, ":", strapped_ests[i], "\n")
+  }
+  strapped_ests
 }
 
 
