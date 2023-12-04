@@ -1,26 +1,26 @@
 {
-    "id": "BFAC31DA",
-    "path": "~/Dropbox/phd/em/code/simulation.R",
-    "project_path": "code/simulation.R",
+    "id": "03511720",
+    "path": "~/Dropbox/phd/em/simulation_code/simulation.R",
+    "project_path": "simulation_code/simulation.R",
     "type": "r_source",
     "hash": "3621657546",
     "contents": "",
     "dirty": false,
-    "created": 1701019726508.0,
+    "created": 1701072409935.0,
     "source_on_save": false,
     "relative_order": 1,
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "101,0",
-        "scrollLine": "87"
+        "cursorPosition": "102,58",
+        "scrollLine": "0"
     },
     "folds": "",
     "lastKnownWriteTime": 1701034975,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1701034975229,
+    "last_content_update": 1701034975,
     "read_only": false,
     "read_only_alternatives": []
 }
