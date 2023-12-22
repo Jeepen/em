@@ -1,7 +1,7 @@
 ---
 title: "README"
 author: "Jeppe Ekstrand Halkjær Madsen"
-date: "2023-12-04"
+date: "2023-12-22"
 output: pdf_document
 ---
 
@@ -18,7 +18,16 @@ source("functions/functions.R")
 ```
 
 ## Overview
-
+- functions/functions.R: The functions that do the estimation with the EM algorithm.
+- simulation_code/simulation.R: The file that runs the simulation. This takes a loong time.
+The results of the simulation is saved in the file intermediate_results/simresults.rds.
+- simulation_code/table1.R: This file generates Table1 from the paper using the 
+results from the simulation, i.e. the intermediate_results/simresults.rds data. 
+The file is exported to results/table1.tex.
+- results/table1.tex: The results as they are in the paper.
+- renv/: Folder with renv files that should make it possible to get all the packages in the 
+same versions as used in the paper. 
+- em.Rproj: R project file that is needed for the renv package to work. 
 
 ## Environment
 ```{r cars}
