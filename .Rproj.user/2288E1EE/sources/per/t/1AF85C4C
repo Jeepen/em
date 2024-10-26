@@ -1,27 +1,26 @@
 {
-    "id": "79937074",
+    "id": "1AF85C4C",
     "path": "~/Dropbox/phd/em/README.Rmd",
     "project_path": "README.Rmd",
     "type": "r_markdown",
-    "hash": "1316186096",
+    "hash": "3284746363",
     "contents": "",
     "dirty": false,
-    "created": 1701716435156.0,
+    "created": 1704452752875.0,
     "source_on_save": false,
-    "relative_order": 3,
+    "relative_order": 1,
     "properties": {
-        "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "26,0",
-        "scrollLine": "0"
+        "cursorPosition": "28,5",
+        "scrollLine": "5"
     },
     "folds": "",
-    "lastKnownWriteTime": 1701718031,
+    "lastKnownWriteTime": 1704457540,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1701718032091,
+    "last_content_update": 1704457540827,
     "read_only": false,
     "read_only_alternatives": []
 }
